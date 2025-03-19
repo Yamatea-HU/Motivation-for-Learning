@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import gspread
+import json
+import os
 from oauth2client.service_account import ServiceAccountCredentials
 
 # Google Sheetsの設定
@@ -8,9 +10,21 @@ SHEET_ID = "1cy85MzRSUbLuGE5RarA-p2MdZ1AGRp-HbVMKWYaezck"
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 CREDS = ServiceAccountCredentials.from_json_keyfile_name("Motivation-for-Learning.json", SCOPE)
 
-# Google Sheets に接続
-client = gspread.authorize(CREDS)
-sheet = client.open_by_key(SHEET_ID).sheet1
+# Renderの環境変数 `GOOGLE_CREDENTIALS` からJSONキーを取得
+creds_json = os.getenv("GOOGLE_CREDENTIALS")
+
+# JSONデータを一時ファイルとして保存
+if creds_json:
+    creds_dict = json.loads(creds_json)  # JSON文字列を辞書に変換
+    with open("Motivation-for-Learning.json", "w") as f:
+        json.dump(creds_dict, f)  # 一時的にJSONファイルを作成
+
+    # Google Sheets に接続
+    creds = ServiceAccountCredentials.from_json_keyfile_name("Motivation-for-Learning.json", SCOPE)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(SHEET_ID).sheet1
+else:
+    st.error("Google Sheets APIの認証情報が見つかりません！")
 
 # タイトル
 st.title("承認欲求尺度")
