@@ -1,46 +1,4 @@
 import streamlit as st
-import pandas as pd
-import gspread
-import json
-import os
-from oauth2client.service_account import ServiceAccountCredentials
-
-# Google Sheetsの設定
-SHEET_ID = "1cy85MzRSUbLuGE5RarA-p2MdZ1AGRp-HbVMKWYaezck"
-SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
-# Renderの環境変数 `GOOGLE_CREDENTIALS` からJSONキーを取得
-creds_json = os.getenv("GOOGLE_CREDENTIALS")
-
-if creds_json:
-    try:
-        st.text("環境変数 `GOOGLE_CREDENTIALS` を取得しました。")
-        creds_dict = json.loads(creds_json)  # JSONを辞書に変換
-
-        # `private_key` の改行を修正（\\n → \n に変換）
-        if "private_key" in creds_dict:
-            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-            st.text("環境変数の `private_key` の改行コードを修正しました。")
-
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
-        client = gspread.authorize(creds)
-        sheet = client.open_by_key(SHEET_ID).sheet1
-        st.success("Google Sheets に接続成功！")
-    
-    except json.JSONDecodeError as json_error:
-        st.error("環境変数 `GOOGLE_CREDENTIALS` のJSONが正しくデコードできませんでした。")
-        st.text(f"JSONデコードエラー: {json_error}")
-
-    except gspread.exceptions.APIError as api_error:
-        st.error("Google Sheets APIのリクエストが失敗しました。")
-        st.text(f"APIエラーの詳細: {api_error}")
-
-    except Exception as e:
-        st.error("Google Sheets APIの認証に失敗しました。")
-        st.text(f"エラーの詳細: {e}")
-
-else:
-    st.error("Google Sheets APIの認証情報が環境変数 `GOOGLE_CREDENTIALS` に見つかりません！")
 
 # タイトル
 st.title("承認欲求尺度")
@@ -70,7 +28,7 @@ questions = [
 ]
 
 # 逆転項目のインデックス（0始まり）
-reverse_indices = [6, 9, 10, 11]  # 逆転する質問のインデックス
+reverse_indices = [5, 8, 9, 10]  # 逆転する質問のインデックス
 
 # 回答オプション
 options = {
@@ -86,27 +44,16 @@ responses = []
 
 # 質問を表示
 for i, question in enumerate(questions):
-    response = st.radio(question, list(options.keys()), index=2)  # デフォルト: どちらでもない
-    score = options[response]
+    response = st.radio(question, list(options.keys()), index=None, key=f"q{i}")  # デフォルト選択なし
+    responses.append(response)  # 選択された値をリストに追加
 
-    # 逆転項目ならスコアを変換
-    if i in reverse_indices:
-        score = 6 - score  # 1 ⇄ 5, 2 ⇄ 4, 3 はそのまま
-
-    responses.append(score)
-
-# 合計点を計算
+# 送信ボタンを押したときの処理
 if st.button("送信"):
-    total_score = sum(responses)
-    st.write(f"あなたの合計スコア: **{total_score} 点**")
-
-    # Google Sheets にデータを保存
-    if creds_json:
-        try:
-            row = [total_score] + responses
-            sheet.append_row(row)  # 回答をGoogle Sheetsに追加
-            st.success("回答がGoogle Sheetsに保存されました！")
-        except Exception as e:
-            st.error(f"データの保存に失敗しました: {e}")
+    # 未回答の項目があるかチェック
+    if None in responses:
+        st.error("⚠️ 未回答の項目があります。すべての質問に回答してください。")
     else:
-        st.error("認証情報が設定されていないため、データを保存できません。")
+        # スコアを変換
+        scores = [6 - options[r] if i in reverse_indices else options[r] for i, r in enumerate(responses)]
+        total_score = sum(scores)
+        st.success(f"あなたの合計スコア: **{total_score} 点**")
