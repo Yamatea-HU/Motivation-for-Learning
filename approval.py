@@ -20,9 +20,11 @@ if creds_json:
         sheet = client.open_by_key(SHEET_ID).sheet1
         st.success("Google Sheets に接続成功！")  # 接続成功時のメッセージ
     except Exception as e:
-        st.error(f"Google Sheets APIの認証に失敗しました: {str(e)}")  # 失敗した場合、詳細なエラーメッセージを表示
+        st.error(f"Google Sheets APIの認証に失敗しました: {e}")  # 失敗した場合、詳細なエラーメッセージを表示
+        st.text("環境変数 `GOOGLE_CREDENTIALS` の値が正しいか、Google Sheets の共有設定が適切か確認してください。")
 else:
     st.error("Google Sheets APIの認証情報が環境変数 `GOOGLE_CREDENTIALS` に見つかりません！")
+    st.text("Render の Environment タブで `GOOGLE_CREDENTIALS` の設定を確認してください。")
 
 # タイトル
 st.title("承認欲求尺度")
