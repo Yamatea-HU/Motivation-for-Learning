@@ -26,10 +26,19 @@ if creds_json:
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
         st.success("Google Sheets に接続成功！")
-    except json.JSONDecodeError:
+    
+    except json.JSONDecodeError as json_error:
         st.error("環境変数 `GOOGLE_CREDENTIALS` のJSONが正しくデコードできませんでした。")
+        st.text(f"JSONデコードエラー: {json_error}")
+
+    except gspread.exceptions.APIError as api_error:
+        st.error("Google Sheets APIのリクエストが失敗しました。")
+        st.text(f"APIエラーの詳細: {api_error}")
+
     except Exception as e:
-        st.error(f"Google Sheets APIの認証に失敗しました: {e}")
+        st.error("Google Sheets APIの認証に失敗しました。")
+        st.text(f"エラーの詳細: {e}")
+
 else:
     st.error("Google Sheets APIの認証情報が環境変数 `GOOGLE_CREDENTIALS` に見つかりません！")
 
