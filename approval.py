@@ -14,17 +14,25 @@ creds_json = os.getenv("GOOGLE_CREDENTIALS")
 
 if creds_json:
     try:
-        creds_dict = json.loads(creds_json)  # JSON文字列を辞書に変換
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)  # 直接辞書から認証
+        st.text("環境変数 `GOOGLE_CREDENTIALS` を取得しました。")  # 確認メッセージ
+        creds_dict = json.loads(creds_json)  # JSONを辞書に変換
+
+        # JSONの中身を確認
+        if "private_key" not in creds_dict:
+            st.error("環境変数 `GOOGLE_CREDENTIALS` のJSONに `private_key` が含まれていません！")
+        else:
+            st.text("環境変数の `private_key` が正常に取得されました。")
+
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
-        st.success("Google Sheets に接続成功！")  # 接続成功時のメッセージ
+        st.success("Google Sheets に接続成功！")
+    except json.JSONDecodeError:
+        st.error("環境変数 `GOOGLE_CREDENTIALS` のJSONが正しくデコードできませんでした。")
     except Exception as e:
-        st.error(f"Google Sheets APIの認証に失敗しました: {e}")  # 失敗した場合、詳細なエラーメッセージを表示
-        st.text("環境変数 `GOOGLE_CREDENTIALS` の値が正しいか、Google Sheets の共有設定が適切か確認してください。")
+        st.error(f"Google Sheets APIの認証に失敗しました: {e}")
 else:
     st.error("Google Sheets APIの認証情報が環境変数 `GOOGLE_CREDENTIALS` に見つかりません！")
-    st.text("Render の Environment タブで `GOOGLE_CREDENTIALS` の設定を確認してください。")
 
 # タイトル
 st.title("承認欲求尺度")
