@@ -18,10 +18,11 @@ if creds_json:
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)  # 直接辞書から認証
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
+        st.success("Google Sheets に接続成功！")  # 接続成功時のメッセージ
     except Exception as e:
-        st.error(f"Google Sheets APIの認証に失敗しました: {e}")
+        st.error(f"Google Sheets APIの認証に失敗しました: {str(e)}")  # 失敗した場合、詳細なエラーメッセージを表示
 else:
-    st.error("Google Sheets APIの認証情報が見つかりません！")
+    st.error("Google Sheets APIの認証情報が環境変数 `GOOGLE_CREDENTIALS` に見つかりません！")
 
 # タイトル
 st.title("承認欲求尺度")
@@ -81,7 +82,13 @@ if st.button("送信"):
     total_score = sum(responses)
     st.write(f"あなたの合計スコア: **{total_score} 点**")
 
-    # データを保存
-    data = pd.DataFrame({"質問": questions, "回答": responses})
-    data.to_csv("responses.csv", index=False)
-    st.write("回答が保存されました！")
+    # Google Sheets にデータを保存
+    if creds_json:
+        try:
+            row = [total_score] + responses
+            sheet.append_row(row)  # 回答をGoogle Sheetsに追加
+            st.success("回答がGoogle Sheetsに保存されました！")
+        except Exception as e:
+            st.error(f"データの保存に失敗しました: {e}")
+    else:
+        st.error("認証情報が設定されていないため、データを保存できません。")
