@@ -1,5 +1,16 @@
 import streamlit as st
 import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Google Sheetsの設定
+SHEET_ID = "1cy85MzRSUbLuGE5RarA-p2MdZ1AGRp-HbVMKWYaezck"
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+CREDS = ServiceAccountCredentials.from_json_keyfile_name("Motivation-for-Learning.json", SCOPE)
+
+# Google Sheets に接続
+client = gspread.authorize(CREDS)
+sheet = client.open_by_key(SHEET_ID).sheet1
 
 # タイトル
 st.title("承認欲求尺度")
