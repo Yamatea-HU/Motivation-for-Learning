@@ -14,14 +14,13 @@ creds_json = os.getenv("GOOGLE_CREDENTIALS")
 
 if creds_json:
     try:
-        st.text("環境変数 `GOOGLE_CREDENTIALS` を取得しました。")  # 確認メッセージ
+        st.text("環境変数 `GOOGLE_CREDENTIALS` を取得しました。")
         creds_dict = json.loads(creds_json)  # JSONを辞書に変換
 
-        # JSONの中身を確認
-        if "private_key" not in creds_dict:
-            st.error("環境変数 `GOOGLE_CREDENTIALS` のJSONに `private_key` が含まれていません！")
-        else:
-            st.text("環境変数の `private_key` が正常に取得されました。")
+        # `private_key` の改行を修正（\\n → \n に変換）
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+            st.text("環境変数の `private_key` の改行コードを修正しました。")
 
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
         client = gspread.authorize(creds)
